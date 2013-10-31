@@ -11,6 +11,7 @@ import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.util.UDFContext;
 
+//generate unique id
 public class ID extends EvalFunc<Long> {
 	static final Log LOG = LogFactory.getLog(ID.class);
 	private Long base;

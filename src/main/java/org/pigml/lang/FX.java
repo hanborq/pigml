@@ -17,13 +17,35 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import org.apache.pig.data.Tuple;
 
 public class FX {
 	//private static final Logger LOG = LoggerFactory.getLogger(FUNCTIONS.class);
-	
+
+    static public <T> T[] repeat(T t, int size) {
+        T[] res = (T[]) Array.newInstance(t.getClass(), size);
+        for (int i=0; i<size; i++) {
+            res[i] = t;
+        }
+        return res;
+    }
+
+    static public <T> T get(Iterator<T> itor, Predicate<? super T> filt) {
+        if (itor != null) {
+            while (itor.hasNext()) {
+                T n = (T) itor.next();
+                if (filt.apply(n)) {
+                    return n;
+                }
+            }
+        }
+        return null;
+    }
 
 	static public <F, T> boolean transitiveSatisfy(Collection<F> collect,
 			Function<F, T> transform, Function<Pair<T, T>, Boolean> test) {
@@ -316,6 +338,36 @@ public class FX {
 		} 
 		return null;
 	}
+
+    static public <T> T any(Callable<T>... candidates) {
+        for (Callable<T> c : candidates) {
+            try {
+                T t = c.call();
+                if (t != null) {
+                    return t;
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
+    }
+
+    static public <T> T lazyResolve(T t, Callable<T> lazy, T... skips) {
+        try {
+            if (t != null) {
+                for (T x : skips) {
+                    if (t == x) {
+                        return lazy.call();
+                    }
+                }
+                return t;
+            }
+            return lazy.call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 	
 	static public interface Callback <R, T> {
 		void call(R r, T t, int index);
