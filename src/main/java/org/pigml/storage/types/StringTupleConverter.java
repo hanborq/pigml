@@ -7,6 +7,7 @@ import org.apache.mahout.common.StringTuple;
 import org.apache.pig.ResourceSchema;
 import org.apache.pig.data.*;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
+import org.pigml.utils.SchemaUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,21 +55,27 @@ public class StringTupleConverter extends AbstractWritableConverter<StringTuple>
 
     @Override
     public void checkStoreSchema(ResourceSchema.ResourceFieldSchema schema) throws IOException {
-        Preconditions.checkArgument(schema.getType() == DataType.BAG,
-                "Expect %s to be Bag while got %s", schema.getName(), DataType.findTypeName(schema.getType()));
-        ResourceSchema.ResourceFieldSchema[] bag = schema.getSchema().getFields();
-        Preconditions.checkArgument(bag != null && bag.length > 0, "Bag %s is empty", schema.getName());
-        Preconditions.checkArgument(bag[0].getType() == DataType.CHARARRAY,
-                "Expect CHARARRAY in bag while got %s", DataType.findTypeName(bag[0].getType()));
+        ResourceSchema.ResourceFieldSchema bag = schema;//SchemaUtils.claim(schema, 0, DataType.BAG);
+        ResourceSchema.ResourceFieldSchema tuple = SchemaUtils.claim(bag, 0, DataType.TUPLE);
+        SchemaUtils.claim(tuple, 0, DataType.CHARARRAY);
     }
 
-    @Override
+    /*@Override
     protected StringTuple toWritable(Tuple value) throws IOException {
         if (value == null) {
             return null;
         }
         StringTuple st = new StringTuple();
         DataBag bag = (DataBag) value.get(0);
+        for (Tuple t : bag) {
+            st.add((String) t.get(0));
+        }
+        return st;
+    }*/
+
+    @Override
+    protected StringTuple toWritable(DataBag bag) throws IOException {
+        StringTuple st = new StringTuple();
         for (Tuple t : bag) {
             st.add((String) t.get(0));
         }

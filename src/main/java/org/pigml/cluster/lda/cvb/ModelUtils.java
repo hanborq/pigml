@@ -19,6 +19,7 @@ import org.pigml.common.Defines;
 import org.pigml.lang.Pair;
 import org.pigml.utils.IOUtils;
 import org.pigml.utils.IterationUtils;
+import org.pigml.utils.PathUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -44,13 +45,15 @@ public class ModelUtils implements Defines {
             @Override
             public Pair<Matrix, Vector> call() throws Exception {
                 LOG.info("Try loading model");
+                Path home = new Path(modelloc);
                 int N = iter >= 0 ? iter :
                      IterationUtils.getLastIteration(conf, new Path(modelloc));
-                if (N < 0) {
+                if (N >= 0) {
+                    home = PathUtils.enter(home, String.valueOf(N));
+                } else if (PathUtils.countParts(conf, modelloc) <= 0 ) {
                     LOG.info("No module found");
                     return null;
                 }
-                Path home = new Path(modelloc, String.valueOf(N));
                 LOG.info("Loading previous model from "+home);
                 int numTopics = -1;
                 int numTerms = -1;
