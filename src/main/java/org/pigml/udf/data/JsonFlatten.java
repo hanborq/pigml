@@ -1,4 +1,4 @@
-package org.pigml.udf.text;
+package org.pigml.udf.data;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -69,15 +69,16 @@ public class JsonFlatten extends EvalFunc<Tuple> {
         if (input != null && input.size() > 0) {
             final JsonNode tree = reader.read(input);
             if (tree != null) {
-                int index=0;
                 String[] results = new String[types.length];
-                for (String[] path : paths) {
+                for (int i=0; i<paths.length; i++) {
                     JsonNode node = tree;
-                    for (int i=0; i<path.length && node != null; i++) {
-                        node = node.get(path[i]);
+                    for (String p : paths[i]) {
+                        if (null == (node = node.get(p))) {
+                            break;
+                        }
                     }
                     if (node != null) {
-                        results[index++] = node.asText();
+                        results[i] = node.isTextual() ? node.asText() : node.toString();
                     }
                 }
                 return tfac.newTupleNoCopy(Arrays.asList(results));
