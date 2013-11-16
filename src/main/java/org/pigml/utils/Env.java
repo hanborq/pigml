@@ -3,12 +3,15 @@ package org.pigml.utils;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.pig.impl.util.UDFContext;
 import org.pigml.common.Defines;
 import org.pigml.lang.FX;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
 
 public class Env {
 
@@ -46,7 +49,12 @@ public class Env {
     //the part-id is the mapreduce task-id
     static public int getPartID() {
         //return UDFContext.getUDFContext().getJobConf().getInt(JobContext.TASK_PARTITION, -1);
-        return getAttemptID().getTaskID().getId();
+        Configuration conf = UDFContext.getUDFContext().getJobConf();
+        /*for (Map.Entry<String, String> ent : conf) {
+            System.out.printf("____ conf %s = %s\n", ent.getKey(), ent.getValue());
+        }*/
+        return conf.getInt(JobContext.TASK_PARTITION, -1);//conf.getInt(JobContext.APPLICATION_ATTEMPT_ID, -1);
+        //return getAttemptID().getTaskID().getId();
     }
 
     static public String identifyJob() {
@@ -58,7 +66,10 @@ public class Env {
     }
 
     static private TaskAttemptID getAttemptID() {
-        return TaskAttemptID.forName(UDFContext.getUDFContext().getJobConf().get("mapred.task.id"));
+        Configuration conf = UDFContext.getUDFContext().getJobConf();
+        return TaskAttemptID.forName(
+                FX.any(conf.get("mapred.task.id"),
+                        conf.get("mapreduce.task.id")));
     }
 
     static public String getJobDefine(Configuration conf, String name) {

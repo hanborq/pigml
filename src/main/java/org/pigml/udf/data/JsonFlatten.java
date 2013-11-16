@@ -1,5 +1,6 @@
 package org.pigml.udf.data;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
@@ -48,7 +49,13 @@ public class JsonFlatten extends EvalFunc<Tuple> {
                     reader = new TreeReader() {
                         @Override
                         public JsonNode read(Tuple tuple) throws IOException {
-                            return mapper.readTree((String) tuple.get(0));
+                            String input = (String) tuple.get(0);
+                            try {
+                                return mapper.readTree((String) tuple.get(0));
+                            } catch (JsonParseException e) {
+                                LOG.error(""+input, e);
+                                return null;
+                            }
                         }
                     };
                 } else {
